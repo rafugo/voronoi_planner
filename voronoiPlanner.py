@@ -3,14 +3,27 @@
 
 class VoronoiPlanner:
 
-    def __init__(self, graph):
+    def __init__(self, filename):
         # this is the graph given as a two-dimensional array
         # there will be 1's for the obstacles/walls, 0 otherwise
-        self.graph = graph
+        self.graph = []
+        
+        f = open(filename, "r")
+        for line in f:
+            line = line.strip().split(' ')
+
+            row = []
+            for c in line:
+                row.append(int(c))
+
+            self.graph.append(row)
+        f.close()
 
         # this is the adjacency list of the points that are considered
         # as the Voronoi edges
         self.voronoi_paths = {}
+
+
 
     # Performs the wavefront algorithm on the graph,
     # populating the Voronoi paths structure
@@ -98,6 +111,47 @@ class VoronoiPlanner:
 
                     if self.voronoi_paths.get((i + k, j + l)) != None:
                         self.voronoi_paths[p].append((i + k, j + l))
+
+
+    # this pretty prints the graph
+    # to the "output_graph.txt" file
+    def pretty_print_graph(self):
+        f = open('output_graph.txt', "w")
+        
+        for row in self.graph:
+            line = ''
+            for c in row:
+                line += str(c) + ' '
+            line = line[:-1]
+            f.write(line + '\n')
+
+        f.close()
+
+    # this pretty prints the voronoi boundary
+    # to the "output_voronoi.txt" file
+    def pretty_print_voronoi(self):
+        f = open('output_voronoi.txt', "w")
+        
+        for i in range(len(self.graph)):
+            line = ''
+            for j in range(len(self.graph[i])):
+                value = self.graph[i][j]
+                if value == 1:
+                    line += '1 '
+                
+                elif self.voronoi_paths.get((i, j)) != None:
+                    line += '. '
+
+                else:
+                    line += '  '
+
+            line = line[:-1]
+            f.write(line + '\n')
+
+        f.close()
+
+
+
 
 
 
