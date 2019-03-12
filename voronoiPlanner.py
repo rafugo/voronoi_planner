@@ -1,6 +1,8 @@
 # this class will take a graph and generate a labelling of the graph with
 # the voronoi paths
 
+import networkx as nx
+
 class VoronoiPlanner:
 
     def __init__(self, filename):
@@ -34,6 +36,9 @@ class VoronoiPlanner:
 
         # initialize the obstacle wave
         self.init_obstacle_wave()
+
+        # perform the wavefront method
+        self.do_wavefront()
 
     # fills in the initial wave tags for the obstacles and walls
     def init_obstacle_wave(self):
@@ -78,6 +83,26 @@ class VoronoiPlanner:
                     
                 self.obstacle_wave[(i, j)] = [tag]
                 
+
+    # finds the node sequence from one voronoi
+    # edge point to another voronoi edge point
+    def find_voronoi_path(self, source, target):
+
+        # create network of the voronoi path points
+        G = nx.from_dict_of_lists(self.voronoi_paths)
+
+        # generate sequence from source to target
+        try:
+            path = nx.shortest_path(G,source=source,target=target)
+        except nx.exception.NetworkXNoPath:
+            path = None
+        except nx.exception.NodeNotFound:
+            path = None
+
+
+
+        return path
+
 
 
     # Performs the wavefront algorithm on the graph,
@@ -267,7 +292,33 @@ class VoronoiPlanner:
 
         f.close()
 
+    # prints out the path from source to destination
+    # to output_path.txt
+    def pretty_print_path(self, source, target):
+        path = self.find_voronoi_path(source, target)
 
+        if path == None:
+            raise("path does not exist along solely voronoi")
+
+        f = open('output_path.txt', "w")
+        
+        for i in range(len(self.graph)):
+            line = ''
+            for j in range(len(self.graph[i])):
+                value = self.graph[i][j]
+                if value == 1:
+                    line += '1 '
+                
+                elif (i, j) in path:
+                    line += '. '
+
+                else:
+                    line += '  '
+
+            line = line[:-1]
+            f.write(line + '\n')
+
+        f.close()
 
 
 
