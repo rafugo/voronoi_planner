@@ -87,7 +87,6 @@ class VoronoiPlanner:
     # finds the node sequence from one voronoi
     # edge point to another voronoi edge point
     def find_voronoi_path(self, source, target):
-
         # create network of the voronoi path points
         G = nx.from_dict_of_lists(self.voronoi_paths)
 
@@ -95,13 +94,77 @@ class VoronoiPlanner:
         try:
             path = nx.shortest_path(G,source=source,target=target)
         except nx.exception.NetworkXNoPath:
-            path = None
+            raise Exception('Target is not reachable from source.')
         except nx.exception.NodeNotFound:
-            path = None
+            if source not in self.voronoi_paths.keys():
+                raise Exception('Source '+ str(source) + \
+                        ' is not on Voronoi boundary.')
 
-
+            elif target not in self.voronoi_paths.keys():
+                raise Exception('Target '+ str(target) + \
+                        ' is not on Voronoi boundary.')
 
         return path
+
+    # finds the whole path required using the closest
+    # voronoi point to the source, and another for
+    # the target
+    def find_path(self, source, target):
+        path = self.find_closest_voronoi(source)
+        vsource = path[-1]
+
+        endpath = self.find_closest_voronoi(target)
+        endpath = endpath[::-1]
+        vtarget = endpath[0]
+
+        midpath = self.find_voronoi_path(vsource, vtarget)
+
+        path += midpath[1:-1] + endpath
+
+        return path
+
+
+    # helper that finds the closest voronoi point
+    # for an input point and returns
+    # (point, path to point)
+    def find_closest_voronoi(self, point):
+
+        # create a graph in networkx of everything that is not an obstacle
+        g = nx.Graph()
+
+        for i in range(len(self.graph)):
+            for j in range(len(self.graph[i])):
+
+                # add any nonobstacle nodes and 
+                # add edges to all surrounding nodes
+                if self.graph[i][j] != 1:
+                    g.add_node((i, j))
+
+                    for k in [-1, 0, 1]:
+                        for l in [-1, 0, 1]:
+                            # no self loops
+                            if k == 0 and l == 0:
+                                continue
+                            # do not consider obstacles
+                            if self.graph[i+k][j+l] == 1:
+                                continue
+
+                            g.add_edge((i, j), (i+k, j+l))
+
+        shortest_path = []
+        min_dist = float('inf')
+        for p in list(self.voronoi_paths.keys()):
+            temp_path = nx.shortest_path(g, point, p)
+
+            if len(temp_path) < min_dist:
+                min_dist = len(temp_path)
+                shortest_path = temp_path
+
+        if shortest_path == []:
+            raise Exception('There is no path from ' + str(point) + \
+                'to Voronoi.')
+
+        return shortest_path
 
 
 
@@ -295,10 +358,7 @@ class VoronoiPlanner:
     # prints out the path from source to destination
     # to output_path.txt
     def pretty_print_path(self, source, target):
-        path = self.find_voronoi_path(source, target)
-
-        if path == None:
-            raise("path does not exist along solely voronoi")
+        path = self.find_path(source, target)
 
         f = open('output_path.txt', "w")
         
