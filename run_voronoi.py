@@ -7,9 +7,6 @@ v = vp.VoronoiPlanner('random_graph1_30_30.txt')
 
 v.do_wavefront()
 
-print(v.graph)
-print("\n")
-print(v.voronoi_paths)
-
 v.pretty_print_graph()
 v.pretty_print_voronoi()
+v.pretty_print_obstacle_wave()
